@@ -1,16 +1,25 @@
 # Makefile for psstat
 BINARY := psstat
 OS := linux
+GOARCH := amd64
 
 COMMIT := $(shell git rev-parse --short HEAD)
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
-VERSION := $(shell git describe --exact-match --tags 2>/dev/null)
+VERSION := $(shell git describe --abbrev=0 2>/dev/null)
 
 # Add defines for commit, branch and version
 LDFLAGS := $(LDFLAGS) -X main.commit=$(COMMIT) -X main.branch=$(BRANCH)
 ifdef VERSION
 	LDFLAGS += -X main.version=$(VERSION)
 endif
+
+# Base BUILDARCH on GOARCH
+ifeq ($(GOARCH),386)
+	BUILDARCH = i386
+else
+	BUILDARCH = $(GOARCH)
+endif
+
 
 .PHONY: all
 all:
@@ -52,6 +61,7 @@ deb: binary
 		--name psstat \
 		--version "$(VERSION)" \
 		--deb-no-default-config-files \
+		--architecture $(BUILDARCH) \
 		--force \
 		$(BINARY)=/usr/sbin/
 
@@ -63,5 +73,6 @@ rpm: binary
 		--name psstat \
 		--version "$(VERSION)" \
 		--deb-no-default-config-files \
+		--architecture $(BUILDARCH) \
 		--force \
 		$(BINARY)=/usr/sbin/
