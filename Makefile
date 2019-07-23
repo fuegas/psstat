@@ -59,6 +59,7 @@ deb: binary
 		--input-type dir \
 		--output-type deb \
 		--name psstat \
+		--description "Gather resource usage of processes for Telegraf" \
 		--version "$(VERSION)" \
 		--deb-no-default-config-files \
 		--architecture $(BUILDARCH) \
@@ -71,6 +72,7 @@ rpm: binary
 		--input-type dir \
 		--output-type rpm \
 		--name psstat \
+		--description "Gather resource usage of processes for Telegraf" \
 		--version "$(VERSION)" \
 		--deb-no-default-config-files \
 		--architecture $(BUILDARCH) \
