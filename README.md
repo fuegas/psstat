@@ -88,3 +88,14 @@ Memory usage is measured as a percentage between 0.000 and 1.000.
 Number of processes, integer. This is the count of the process and its children.
 
 - psstat.n_proc value=3
+
+## Package building
+
+To build a package, the tool [fpm](https://github.com/jordansissel/fpm) is
+used, please follow the [installation guide](https://fpm.readthedocs.io/en/latest/installing.html)
+to be able to build a package.
+
+The following OSes are supported:
+
+- Debian, Ubuntu: `make deb`
+- CentOS, RHEL: `make rpm`

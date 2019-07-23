@@ -43,3 +43,25 @@ watch:
 	@clear
 	@echo "Watching current directory for changes"
 	@fswatch --recursive --event Updated --one-per-batch ./*  | xargs -n1 -I{} make clear binary
+
+.PHONY: deb
+deb: binary
+	@fpm \
+		--input-type dir \
+		--output-type deb \
+		--name psstat \
+		--version "$(VERSION)" \
+		--deb-no-default-config-files \
+		--force \
+		$(BINARY)=/usr/sbin/
+
+.PHONY: rpm
+rpm: binary
+	@fpm \
+		--input-type dir \
+		--output-type rpm \
+		--name psstat \
+		--version "$(VERSION)" \
+		--deb-no-default-config-files \
+		--force \
+		$(BINARY)=/usr/sbin/
