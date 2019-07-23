@@ -1,14 +1,16 @@
 # Makefile for psstat
-BINARY := psstat
-OS := linux
-GOARCH := amd64
+-include $(wildcard Makefile.make)
 
-COMMIT := $(shell git rev-parse --short HEAD)
-BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
-VERSION := $(shell git describe --abbrev=0 2>/dev/null)
+BINARY  ?= psstat
+OS      ?= linux
+GOARCH  ?= amd64
+
+COMMIT  ?= $(shell git rev-parse --short HEAD)
+BRANCH  ?= $(shell git rev-parse --abbrev-ref HEAD)
+VERSION ?= $(shell git describe --abbrev=0 2>/dev/null)
 
 # Add defines for commit, branch and version
-LDFLAGS := $(LDFLAGS) -X main.commit=$(COMMIT) -X main.branch=$(BRANCH)
+LDFLAGS += -X main.commit=$(COMMIT) -X main.branch=$(BRANCH)
 ifdef VERSION
 	LDFLAGS += -X main.version=$(VERSION)
 endif
@@ -29,7 +31,7 @@ all:
 binary:
 	@printf "Building... "
 	@date
-	@GOOS=$(OS) go build -v -i -o $(BINARY) -ldflags "$(LDFLAGS)" ./cmd/$(BINARY).go && echo "\033[32;1mBuild success ヽ(°□°)ﾉ\033[0m" || echo "\033[31;1mBuild failed (╯°□°）╯︵ ┻━┻\033[0m"
+	@GOOS=$(OS) go build -v -i -o $(BINARY) -ldflags "$(LDFLAGS)" ./cmd/$(BINARY).go && echo "\033[32;1mBuild success ヽ(°□°)ﾉ\033[0m" || (echo "\033[31;1mBuild failed (╯°□°）╯︵ ┻━┻\033[0m" && exit 1)
 
 .PHONY: fmt
 fmt:
