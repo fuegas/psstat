@@ -80,7 +80,6 @@ var fCacheName = flag.String("cache-name", "psstat",
 var fVersion = flag.Bool("version", false, "Show the current version")
 
 var (
-	nextVersion = "0.1.0"
 	version     string
 	commit      string
 	branch      string
@@ -128,7 +127,7 @@ func main() {
 	// Show version if requested
 	if *fVersion {
 		if version == "" {
-			fmt.Printf("v%s @ %s on %s\n", nextVersion, commit, branch)
+			fmt.Printf("experimental @ %s on %s\n", commit, branch)
 		} else {
 			fmt.Printf("v%s\n", version)
 		}
@@ -228,6 +227,6 @@ func main() {
 
 		fmt.Printf(
 			"psstat%s,process_name=%s pcpu=%.3f,pmem=%.3f,n_proc=%di\n",
-			tags.String(), name, cpuPerc, memPerc, proc.Processes)
+			tags.String(), utils.Escape(name), cpuPerc, memPerc, proc.Processes)
 	}
 }
