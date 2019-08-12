@@ -7,7 +7,7 @@ GOARCH  ?= amd64
 
 COMMIT  ?= $(shell git rev-parse --short HEAD)
 BRANCH  ?= $(shell git rev-parse --abbrev-ref HEAD)
-VERSION ?= $(shell git describe --abbrev=0 --match=HEAD 2>/dev/null)
+VERSION ?= $(shell git describe 2>/dev/null)
 
 # Add defines for commit, branch and version
 LDFLAGS += -X main.commit=$(COMMIT) -X main.branch=$(BRANCH)
@@ -21,7 +21,6 @@ ifeq ($(GOARCH),386)
 else
 	BUILDARCH = $(GOARCH)
 endif
-
 
 .PHONY: all
 all:
