@@ -80,9 +80,9 @@ var fCacheName = flag.String("cache-name", "psstat",
 var fVersion = flag.Bool("version", false, "Show the current version")
 
 var (
-	version     string
-	commit      string
-	branch      string
+	version string
+	commit  string
+	branch  string
 )
 
 // Set defaults if no values were passed
@@ -105,6 +105,13 @@ func (p *ArrayFlags) Set(value string) error {
 }
 
 func main() {
+	// Limit number of procs to prevent high load notices when threads are
+	// spawned to index /proc. For more information see:
+	// https://blog.avast.com/investigation-of-regular-high-load-on-unused-machines-every-7-hours
+	if runtime.NumCPU() > 4 {
+		runtime.GOMAXPROCS(4)
+	}
+
 	var err error
 	// Parse arguments
 	flag.Usage = func() { exitWithUsage(0) }
