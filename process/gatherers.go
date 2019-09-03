@@ -82,42 +82,68 @@ func PidsFromSystemdFlags(flags []string, accumulator map[PID]string) {
 	for _, systemdFlag := range flags {
 		pattern, name := splitFlag(systemdFlag)
 
-		cmd := execCommand("systemctl", "show", pattern)
-		output, err := cmd.Output()
+		cmd := execCommand("systemctl", "list-units", pattern, "--type=service", "--full", "--no-legend", "--no-pager", "--no-ask-password")
+		unitListLines, err := cmd.Output()
 		if err != nil {
-			utils.PrintError("Could not retrieve systemd unit: ", pattern, err)
+			utils.PrintError("Could not list systemd units: ", pattern, err)
 			continue
 		}
 
-		// Iterate over lines to find MainPID
-	Next: // Label to skip to next pattern
-		for _, line := range bytes.Split(output, []byte{'\n'}) {
-			// Split lines on '=' to split key from value
-			parts := bytes.SplitN(line, []byte{'='}, 2)
+		// Skip an empty list
+		if len(unitListLines) == 0 {
+			continue
+		}
 
-			// If we have more or less than 2 parts, something is wrong
-			// For example, a line without an '='
-			if len(parts) != 2 {
+		// Iterate over found systemd units
+	Next:
+		for _, unitListLine := range bytes.Split(unitListLines, []byte{'\n'}) {
+			// Skip empty line
+			if len(unitListLine) == 0 {
 				continue
 			}
 
-			// Skip if the key is not MainPID
-			if !bytes.Equal(parts[0], []byte("MainPID")) {
-				continue
-			}
+			// Get unit id from line
+			unitId := string(bytes.SplitN(unitListLine, []byte{' '}, 2)[0])
+			pid := 0
 
-			// Skip to next pattern if value is 0
-			if len(parts[1]) == 0 || bytes.Equal(parts[1], []byte("0")) {
-				continue Next
-			}
-
-			pid, err := strconv.Atoi(string(parts[1]))
+			cmd := execCommand("systemctl", "show", unitId, "--property=MainPID")
+			unitLines, err := cmd.Output()
 			if err != nil {
-				utils.PrintError("Invalid PID from systemd unit: ", pattern, parts[1])
-				continue Next
+				utils.PrintError("Could not show systemd unit: ", unitId, err)
+				continue
 			}
 
-			accumulator[PID(pid)] = name
+			for _, unitLine := range bytes.Split(unitLines, []byte{'\n'}) {
+				// Skip empty line
+				if len(unitLine) == 0 {
+					continue
+				}
+
+				// Get pid part from line
+				pidStr := string(bytes.SplitN(unitLine, []byte{'='}, 2)[1])
+
+				// Skip empty value and illegal value
+				if len(pidStr) == 0 || pidStr == "0" {
+					continue
+				}
+
+				pid, err = strconv.Atoi(pidStr)
+				if err != nil {
+					utils.PrintError("Invalid PID from systemd unit: ", unitId, pidStr)
+					break Next
+				}
+			}
+
+			// Use id from unit or override with name from flags
+			id := strings.ReplaceAll(unitId, ".service", "")
+			if name != "" {
+				id = name
+			}
+
+			// Only store if we have a pid
+			if pid > 0 {
+				accumulator[PID(pid)] = id
+			}
 		}
 	}
 }
