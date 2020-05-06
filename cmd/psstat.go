@@ -34,6 +34,8 @@ The options are:
   --cache-dir <name>      Name of the directory to store the stats cache (default: /mnt/psstat)
   --cache-name <name>     Name of the file to store the stats cache (in cache-dir)
 
+  --single-threaded       Run process gathering in a single thread, this can avoid strange load spikes on servers with many processes.
+
   --help                  Show this description
   --version               Show the current version
 
@@ -76,6 +78,9 @@ var fCacheDir = flag.String("cache-dir", "/tmp",
 	"store cache data in a file in this directory")
 var fCacheName = flag.String("cache-name", "psstat",
 	"store cache data in a file with this name")
+
+var fSingleThreaded = flag.Bool("single-threaded", false,
+	"Run process gathering on a single thread")
 
 var fVersion = flag.Bool("version", false, "Show the current version")
 
@@ -178,7 +183,7 @@ func main() {
 	// Aggregate all known processes
 	currentTime := time.Now().UnixNano()
 	var procs map[PID]*Process
-	procs, err = GatherAllProcs()
+	procs, err = GatherAllProcs(*fSingleThreaded)
 	if err != nil {
 		exitError("Failed to gather process information:", err)
 	}

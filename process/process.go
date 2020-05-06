@@ -32,7 +32,40 @@ type Process struct {
 //
 // When it builds the map, the relevant information of a Process is read from
 // stat and statm
-func GatherAllProcs() (map[PID]*Process, error) {
+func GatherAllProcs(singleThreaded bool) (map[PID]*Process, error) {
+	if singleThreaded {
+		return GatherAllProcsSingleThreaded()
+	} else {
+		return GatherAllProcsMultiThreaded()
+	}
+}
+
+// Does what GatherAllProcs claims, but single threaded
+func GatherAllProcsSingleThreaded() (map[PID]*Process, error) {
+	procs := make(map[PID]*Process)
+
+	// Find all pids
+	files, err := ioutil.ReadDir(procPath())
+	if err != nil {
+		return nil, err
+	}
+
+	// Iterate over processes
+	for _, file := range files {
+		pid, err := strconv.Atoi(file.Name())
+		if file.IsDir() && err == nil {
+			proc, err := NewProcess(PID(pid))
+			if err == nil {
+				procs[proc.Pid] = proc
+			}
+		}
+	}
+
+	return procs, nil
+}
+
+// Does what GatherAllProcs claims, but multi threaded
+func GatherAllProcsMultiThreaded() (map[PID]*Process, error) {
 	procs := make(map[PID]*Process)
 	done := make(chan *Process)
 
