@@ -32,11 +32,11 @@ type Process struct {
 //
 // When it builds the map, the relevant information of a Process is read from
 // stat and statm
-func GatherAllProcs(singleThreaded bool) (map[PID]*Process, error) {
-	if singleThreaded {
-		return GatherAllProcsSingleThreaded()
-	} else {
+func GatherAllProcs(multiThreaded bool) (map[PID]*Process, error) {
+	if multiThreaded {
 		return GatherAllProcsMultiThreaded()
+	} else {
+		return GatherAllProcsSingleThreaded()
 	}
 }
 
