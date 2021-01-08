@@ -188,13 +188,17 @@ func (p *Process) SumResources(procs map[PID]*Process) (float64, int64) {
 	times := p.UserTime + p.SystemTime
 	memory := p.MemoryUsed
 
+	var c_times float64
+	var c_memory int64
+
 	// Loop through all processes and add up user/system time and memory
 	for _, proc := range procs {
 		// Check if process is a child
 		if proc.Parent == p.Pid {
-			times += proc.UserTime + proc.SystemTime
-			memory += proc.MemoryUsed
-			p.Processes++
+			c_times, c_memory = proc.SumResources(procs)
+			times += c_times
+			memory += c_memory
+			p.Processes += proc.Processes
 		}
 	}
 
