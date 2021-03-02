@@ -9,6 +9,14 @@ COMMIT  ?= $(shell git rev-parse --short HEAD)
 BRANCH  ?= $(shell git rev-parse --abbrev-ref HEAD)
 VERSION ?= $(shell git describe 2>/dev/null)
 
+PKG_NAME ?= "$(BINARY)"
+PKG_DESCRIPTION ?= "Gather resource usage of processes for Telegraf"
+PKG_BIN_DIR ?= "/usr/sbin/"
+PKG_LICENSE ?= "MIT"
+PKG_VENDOR ?= "unknown"
+PKG_MAINTAINER ?= "$(shell git config user.name) <$(shell git config user.email)>"
+PKG_URI ?= "https://github.com/fuegas/psstat"
+
 # Add defines for commit, branch and version
 LDFLAGS += -X main.commit=$(COMMIT) -X main.branch=$(BRANCH)
 ifdef VERSION
@@ -30,7 +38,7 @@ all:
 binary:
 	@printf "Building... "
 	@date
-	@GOOS=$(OS) go build -v -i -o $(BINARY) -ldflags "$(LDFLAGS)" ./cmd/$(BINARY).go && echo "\033[32;1mBuild success ヽ(°□°)ﾉ\033[0m" || (echo "\033[31;1mBuild failed (╯°□°）╯︵ ┻━┻\033[0m" && exit 1)
+	@GOOS=$(OS) GO111MODULE=auto go build -v -o $(BINARY) -ldflags "$(LDFLAGS)" ./cmd/$(BINARY).go && echo "\033[32;1mBuild success ヽ(°□°)ﾉ\033[0m" || (echo "\033[31;1mBuild failed (╯°□°）╯︵ ┻━┻\033[0m" && exit 1)
 
 .PHONY: fmt
 fmt:
@@ -63,23 +71,30 @@ deb: binary
 	@fpm \
 		--input-type dir \
 		--output-type deb \
-		--name psstat \
-		--description "Gather resource usage of processes for Telegraf" \
-		--version "$(VERSION)" \
 		--deb-no-default-config-files \
-		--architecture $(BUILDARCH) \
 		--force \
-		$(BINARY)=/usr/sbin/
+		--architecture $(BUILDARCH) \
+		--description $(PKG_DESCRIPTION) \
+		--license $(PKG_LICENSE) \
+		--maintainer $(PKG_MAINTAINER) \
+		--name "$(PKG_NAME)" \
+		--url $(PKG_URI) \
+		--vendor $(PKG_VENDOR) \
+		--version "$(VERSION)" \
+		$(BINARY)="$(PKG_BIN_DIR)"
 
 .PHONY: rpm
 rpm: binary
 	@fpm \
 		--input-type dir \
 		--output-type rpm \
-		--name psstat \
-		--description "Gather resource usage of processes for Telegraf" \
-		--version "$(VERSION)" \
-		--deb-no-default-config-files \
-		--architecture $(BUILDARCH) \
 		--force \
-		$(BINARY)=/usr/sbin/
+		--architecture $(BUILDARCH) \
+		--description "$(PKG_DESCRIPTION)" \
+		--license $(PKG_LICENSE) \
+		--maintainer $(PKG_MAINTAINER) \
+		--name "$(PKG_NAME)" \
+		--url $(PKG_URI) \
+		--vendor $(PKG_VENDOR) \
+		--version "$(VERSION)" \
+		$(BINARY)="$(PKG_BIN_DIR)"
