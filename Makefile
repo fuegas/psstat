@@ -23,6 +23,9 @@ ifdef VERSION
 	LDFLAGS += -X main.version=$(VERSION)
 endif
 
+# Remove DWARF tables
+LDFLAGS += -s -w
+
 # Base BUILDARCH on GOARCH
 ifeq ($(GOARCH),386)
 	BUILDARCH = i386
