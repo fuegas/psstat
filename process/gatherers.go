@@ -20,6 +20,11 @@ func splitFlag(value string) (string, string) {
 	}
 }
 
+func splitProperty(value []byte) (string, string) {
+	arr := strings.Split(string(value), "=")
+	return arr[0], arr[1]
+}
+
 // Loop through PID's and and split them to get the PID and name
 func PidsFromPidFlags(flags []string, accumulator map[PID]string) {
 	for _, pidFlag := range flags {
@@ -82,67 +87,52 @@ func PidsFromSystemdFlags(flags []string, accumulator map[PID]string) {
 	for _, systemdFlag := range flags {
 		pattern, name := splitFlag(systemdFlag)
 
-		cmd := execCommand("systemctl", "list-units", pattern, "--type=service", "--full", "--no-legend", "--no-pager", "--no-ask-password")
-		unitListLines, err := cmd.Output()
+		id := ""
+		pid := 0
+
+		var propertyKey string
+		var propertyValue string
+
+		cmd := execCommand("systemctl", "show", pattern, "--property=MainPID", "--property=Id")
+		unitLines, err := cmd.Output()
 		if err != nil {
-			utils.PrintError("Could not list systemd units: ", pattern, err)
+			utils.PrintError("Could not show systemd units: ", pattern, err)
 			continue
 		}
 
-		// Skip an empty list
-		if len(unitListLines) == 0 {
-			continue
-		}
-
-		// Iterate over found systemd units
 	Next:
-		for _, unitListLine := range bytes.Split(unitListLines, []byte{'\n'}) {
-			// Skip empty line
-			if len(unitListLine) == 0 {
+		for _, unitLine := range bytes.Split(unitLines, []byte{'\n'}) {
+			// Empty line means next unit
+			if len(unitLine) == 0 {
+				if id == "" || pid == 0 {
+					utils.PrintError("Invalid ID/PID from systemd unit: ", id, pid)
+				} else {
+					accumulator[PID(pid)] = id
+				}
+
+				id = ""
+				pid = 0
 				continue
 			}
 
-			// Get unit id from line
-			unitId := string(bytes.SplitN(unitListLine, []byte{' '}, 2)[0])
-			pid := 0
+			propertyKey, propertyValue = splitProperty(unitLine)
 
-			cmd := execCommand("systemctl", "show", unitId, "--property=MainPID")
-			unitLines, err := cmd.Output()
-			if err != nil {
-				utils.PrintError("Could not show systemd unit: ", unitId, err)
-				continue
-			}
-
-			for _, unitLine := range bytes.Split(unitLines, []byte{'\n'}) {
-				// Skip empty line
-				if len(unitLine) == 0 {
-					continue
+			switch propertyKey {
+			// Use id from unit or override with name from flags
+			case "Id":
+				id = strings.ReplaceAll(propertyValue, ".service", "")
+				if name != "" {
+					id = name
 				}
-
-				// Get pid part from line
-				pidStr := string(bytes.SplitN(unitLine, []byte{'='}, 2)[1])
-
-				// Skip empty value and illegal value
-				if len(pidStr) == 0 || pidStr == "0" {
-					continue
-				}
-
-				pid, err = strconv.Atoi(pidStr)
+			case "MainPID":
+				pid, err = strconv.Atoi(propertyValue)
 				if err != nil {
-					utils.PrintError("Invalid PID from systemd unit: ", unitId, pidStr)
+					utils.PrintError("Invalid PID from systemd unit: ", unitLine)
 					break Next
 				}
-			}
-
-			// Use id from unit or override with name from flags
-			id := strings.ReplaceAll(unitId, ".service", "")
-			if name != "" {
-				id = name
-			}
-
-			// Only store if we have a pid
-			if pid > 0 {
-				accumulator[PID(pid)] = id
+			default:
+				utils.PrintError("Invalid property from systemd unit: ", unitLine)
+				break Next
 			}
 		}
 	}
