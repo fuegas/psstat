@@ -42,8 +42,8 @@ to build the first cache. Consecutive runs will output data.
 
 The above configuration would result in output like:
 ```
-> psstat,host=tengu,env=production,process_name=nginx p_cpu=0.42,p_mem=0.001,n_proc=5i 1562471764000000000
-> psstat,host=tengu,env=production,process_name=mysql p_cpu=3.14,p_mem=1.592,n_proc=65i 1562471764000000000
+> psstat,env=production,process_name=nginx p_cpu=0.42,p_mem=0.001,n_proc=5i 1562471764000000000
+> psstat,env=production,process_name=mysql p_cpu=3.14,p_mem=1.592,n_proc=65i 1562471764000000000
 ```
 
 ## Cache on tmpfs
