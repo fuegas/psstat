@@ -28,7 +28,6 @@ The options are:
   --pattern [<name>:]<pattern>    Pattern to find a process with (all matches are used)
   --systemd [<name>:]<pattern>    Systemd unit to find a process with (all matches are used)
 
-  --host <host>           Set the host tag
   --tag <name>=<value>    Add a tag to the output (for example: env=production)
 
   --cache-dir <name>      Name of the directory to store the stats cache (default: /mnt/psstat)
@@ -72,7 +71,6 @@ var fPatterns ArrayFlags
 var fSystemds ArrayFlags
 
 var fTags ArrayFlags
-var fHost = flag.String("host", "", "set the host tag")
 
 var fCacheDir = flag.String("cache-dir", "/tmp",
 	"store cache data in a file in this directory")
@@ -158,14 +156,6 @@ func main() {
 		tagsMap[arr[0]] = arr[1]
 	}
 
-	// Determine host if not provided
-	if *fHost == "" {
-		*fHost, err = os.Hostname()
-		if err != nil {
-			exitError("Could not determine hostname:", err)
-		}
-	}
-	tagsMap["host"] = *fHost
 	tags := new(bytes.Buffer)
 	for key, value := range tagsMap {
 		fmt.Fprintf(tags, ",%s=%s", key, value)
